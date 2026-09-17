@@ -1,0 +1,32 @@
+# Thư viện, bản build và bộ nhớ đệm
+node_modules/
+dist/
+*.tsbuildinfo
+.vite/
+.cache/
+
+# Kết quả kiểm thử và nhật ký
+test-results/
+playwright-report/
+blob-report/
+coverage/
+*.log
+
+# Biến môi trường riêng; giữ lại tệp mẫu nếu có
+.env
+.env.*
+!.env.example
+
+# Công cụ và cấu hình cá nhân trên máy phát triển
+.tooling/
+.agents/
+.codex/
+.vscode/
+.idea/
+
+# Tệp tạm của hệ điều hành và trình soạn thảo
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~

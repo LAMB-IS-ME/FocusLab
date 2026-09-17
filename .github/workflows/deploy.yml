@@ -1,0 +1,53 @@
+name: Triển khai StudyFlow
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Lấy mã nguồn
+        uses: actions/checkout@v4
+      - name: Chuẩn bị Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Cài thư viện
+        run: npm ci
+      - name: Kiểm tra logic
+        run: npm test
+      - name: Tạo bản phát hành
+        run: npm run build
+      - name: Cài trình duyệt kiểm thử
+        run: npx playwright install --with-deps chromium
+      - name: Kiểm thử trên trình duyệt
+        run: npm run test:e2e
+      - name: Chuẩn bị GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: Đóng gói trang tĩnh
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Xuất bản GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
