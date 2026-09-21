@@ -1,4 +1,4 @@
-name: Triển khai StudyFlow
+name: Triển khai FocusLab
 
 on:
   push:
@@ -29,8 +29,16 @@ jobs:
         run: npm ci
       - name: Kiểm tra logic
         run: npm test
+      - name: Kiểm tra kiểu dữ liệu
+        run: npm run check
       - name: Tạo bản phát hành
-        run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || vars.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          test -n "$VITE_SUPABASE_URL" || { echo "Thiếu VITE_SUPABASE_URL"; exit 1; }
+          test -n "$VITE_SUPABASE_ANON_KEY" || { echo "Thiếu VITE_SUPABASE_ANON_KEY"; exit 1; }
+          npm run build
       - name: Cài trình duyệt kiểm thử
         run: npx playwright install --with-deps chromium
       - name: Kiểm thử trên trình duyệt

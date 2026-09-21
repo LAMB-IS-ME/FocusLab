@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
-  // Đường dẫn tương đối dùng được với /FocusLab/, /studyflow/ và tên miền riêng.
+  // Đường dẫn tương đối dùng được với /FocusLab/ và tên miền riêng.
   base: './',
   plugins: [react(), tailwindcss()],
   build: {

@@ -5,9 +5,11 @@ import { Button, ConfirmDialog, EmptyState, IconButton, PageHeading } from '../c
 import { dateKey, formatDate, uid } from '../utils/date'
 
 export default function Notes() {
-  const { data, setData, toast } = useApp()
+  const { data, setData, toast, syncStatus } = useApp()
   const [search, setSearch] = useState('')
-  const [selected, setSelected] = useState<string | null>(data.notes[0]?.id ?? null)
+  const [selected, setSelected] = useState<string | null>(
+    () => [...data.notes].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0]?.id ?? null,
+  )
   const [deleting, setDeleting] = useState(false)
   const note = data.notes.find((n) => n.id === selected)
   const previousIds = useRef(new Set(data.notes.map((n) => n.id)))
@@ -107,7 +109,11 @@ export default function Notes() {
               <div className="note-editor-toolbar">
                 <span className="save-indicator">
                   <Check size={13} />
-                  Tự động lưu
+                  {syncStatus === 'saved'
+                    ? 'Đã lưu lên đám mây'
+                    : syncStatus === 'error'
+                      ? 'Chưa đồng bộ'
+                      : 'Đang lưu…'}
                 </span>
                 <span className="muted text-xs">{formatDate(dateKey(note.updatedAt), true)}</span>
                 <div className="ml-auto flex">

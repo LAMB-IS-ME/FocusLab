@@ -40,7 +40,7 @@ export function EventEditor({
                   )
                 : [...current.events, { ...draft, title: draft.title.trim() }],
             }))
-            toast('Đã lưu lịch học')
+            toast('Đã cập nhật lịch học')
             onClose()
           }}
         >

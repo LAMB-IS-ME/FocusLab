@@ -1,9 +1,10 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import type { Dispatch, ReactNode, SetStateAction } from 'react'
 import type { AppData, Page, Task, TimerMode } from '../types'
-import { loadData, saveData, STORAGE_KEY, dataSchema, clearRecoveryData } from '../lib/storage'
+import { useCloudData } from './useCloudData'
+import { useAuth } from './useAuth'
+import { signOut } from '../services/auth'
 import { advanceTimer, newTimer } from '../lib/timer'
-import { emptyData } from '../data/demo'
 import { uid } from '../utils/date'
 
 type Toast = { id: string; text: string }
@@ -20,7 +21,10 @@ interface AppContextValue {
   toggleTask: (task: Task) => void
   timerAction: (action: 'start' | 'pause' | 'reset' | 'skip') => void
   changeMode: (mode: TimerMode) => void
-  reset: () => void
+  reset: () => Promise<boolean>
+  syncStatus: string
+  retrySync: () => void
+  logout: () => Promise<void>
 }
 const AppContext = createContext<AppContextValue | null>(null)
 const pages: Page[] = ['dashboard', 'tasks', 'focus', 'calendar', 'subjects', 'notes', 'settings']
@@ -30,21 +34,9 @@ function getPage(): Page {
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [initial] = useState(() => {
-    try {
-      return loadData()
-    } catch {
-      return {
-        data: emptyData(),
-        warning: 'Trình duyệt đang chặn lưu trữ. Dữ liệu chỉ được giữ trong lần mở này.',
-      }
-    }
-  })
-  const [data, setData] = useState(initial.data)
-  const incomingData = useRef<AppData | null>(null)
-  const [storageWarning, setStorageWarning] = useState(initial.warning)
   const [page, setPage] = useState<Page>(getPage)
   const [toasts, setToasts] = useState<Toast[]>([])
+  const [authActionError, setAuthActionError] = useState('')
   const toast = useCallback(
     (text: string) => setToasts((current) => [...current.slice(-3), { id: uid(), text }]),
     [],
@@ -53,6 +45,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     (id: string) => setToasts((current) => current.filter((t) => t.id !== id)),
     [],
   )
+  const { session } = useAuth()
+  const cloud = useCloudData(session!.user.id, toast)
+  const { data, setData, reset } = cloud
+  const storageWarning = cloud.error
+  const logout = async () => {
+    if (!(await cloud.flush())) return
+    try {
+      await signOut()
+    } catch {
+      toast('Chưa đăng xuất được. Hãy kiểm tra mạng và thử lại.')
+    }
+  }
   const navigate = useCallback((next: Page) => {
     location.hash = next
     setPage(next)
@@ -64,31 +68,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('hashchange', change)
   }, [])
   useEffect(() => {
-    // Không ghi ngược dữ liệu vừa nhận, tránh hai thẻ trình duyệt phát lặp sự kiện.
-    if (incomingData.current === data) {
-      incomingData.current = null
-      return
-    }
-    if (!saveData(data))
-      setStorageWarning(
-        'Không thể lưu dữ liệu. Bộ nhớ có thể đã đầy hoặc bị chặn; hãy xuất bản sao trong Cài đặt.',
-      )
-  }, [data])
-  useEffect(() => {
-    const sync = (event: StorageEvent) => {
-      if (event.key !== STORAGE_KEY || !event.newValue) return
-      try {
-        const parsed = dataSchema.parse(JSON.parse(event.newValue))
-        incomingData.current = parsed
-        setData((current) => (JSON.stringify(current) === event.newValue ? current : parsed))
-      } catch {
-        setStorageWarning('Dữ liệu từ thẻ khác không hợp lệ, nên chưa được khôi phục.')
-      }
-    }
-    window.addEventListener('storage', sync)
-    return () => window.removeEventListener('storage', sync)
-  }, [])
-  useEffect(() => {
     const check = () => setData((current) => advanceTimer(current, Date.now()))
     check()
     const interval = window.setInterval(check, 500)
@@ -97,7 +76,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       window.clearInterval(interval)
       document.removeEventListener('visibilitychange', check)
     }
-  }, [])
+  }, [setData])
   const previousTimer = useRef(data.timer)
   useEffect(() => {
     const prev = previousTimer.current
@@ -125,7 +104,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         ? current.tasks.map((t) => (t.id === task.id ? task : t))
         : [...current.tasks, task],
     }))
-    toast('Đã lưu công việc')
+    toast('Đã cập nhật công việc')
   }
   const toggleTask = (task: Task) => {
     const completed = task.status !== 'done'
@@ -165,11 +144,33 @@ export function AppProvider({ children }: { children: ReactNode }) {
     })
   const changeMode = (mode: TimerMode) =>
     setData((current) => ({ ...current, timer: newTimer(current, mode) }))
-  const reset = () => {
-    if (clearRecoveryData()) setStorageWarning('')
-    setData(emptyData())
-    toast('Đã xóa dữ liệu và tạo không gian học tập trống')
-  }
+  if (!cloud.loaded)
+    return (
+      <main className="auth-screen">
+        <section className="panel auth-card">
+          <h1>FocusLab</h1>
+          <p role={cloud.status === 'loading' ? 'status' : 'alert'}>
+            {cloud.status === 'loading' ? 'Đang tải không gian học tập…' : cloud.error}
+          </p>
+          {authActionError && <p role="alert">{authActionError}</p>}
+          {cloud.status !== 'loading' && (
+            <button className="button primary" onClick={cloud.retry}>
+              Thử lại
+            </button>
+          )}
+          <button
+            className="button secondary"
+            onClick={() => {
+              void signOut().catch(() =>
+                setAuthActionError('Chưa đăng xuất được. Hãy kiểm tra mạng và thử lại.'),
+              )
+            }}
+          >
+            Đăng xuất
+          </button>
+        </section>
+      </main>
+    )
   return (
     <AppContext.Provider
       value={{
@@ -186,6 +187,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         timerAction,
         changeMode,
         reset,
+        syncStatus: cloud.status,
+        retrySync: cloud.retry,
+        logout,
       }}
     >
       {children}

@@ -22,9 +22,9 @@ function memoryStorage(value: string | null = null): Storage {
   }
 }
 describe('Khôi phục dữ liệu', () => {
-  it('dữ liệu mẫu hợp lệ, chỉ tạo khi chưa có dữ liệu', () => {
+  it('dữ liệu mẫu hợp lệ nhưng không tự tạo khi chưa có dữ liệu', () => {
     expect(dataSchema.safeParse(createDemoData()).success).toBe(true)
-    expect(loadData(memoryStorage()).data.tasks.length).toBeGreaterThan(0)
+    expect(loadData(memoryStorage()).data.tasks).toHaveLength(0)
     const saved = emptyData()
     expect(loadData(memoryStorage(JSON.stringify(saved))).data).toEqual(saved)
   })

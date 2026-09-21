@@ -1,14 +1,12 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, stored, synced } from './fixtures'
 import type { Page } from '@playwright/test'
 
 async function go(page: Page, route: string) {
+  if (await page.locator('.cloud-status').count()) await synced(page)
   await page.goto(`/#${route}`)
-  await expect(page.locator('h1')).toBeVisible()
+  await synced(page)
+  await expect(page.locator('.page-heading h1')).toBeVisible()
 }
-async function stored(page: Page) {
-  return page.evaluate(() => JSON.parse(localStorage.getItem('studyflow:data:v1')!))
-}
-
 test('công việc: tạo, sửa, lọc, hoàn thành, lưu và xóa', async ({ page }) => {
   await go(page, 'tasks')
   await page.getByRole('button', { name: 'Thêm công việc', exact: true }).first().click()
@@ -27,6 +25,7 @@ test('công việc: tạo, sửa, lọc, hoàn thành, lưu và xóa', async ({ 
   await page.getByRole('button', { name: 'Lưu công việc' }).click()
   await page.getByLabel('Trạng thái Bài tập đã chỉnh sửa').selectOption('progress')
   await page.getByRole('button', { name: 'Hoàn thành: Bài tập đã chỉnh sửa', exact: true }).click()
+  await synced(page)
   await page.reload()
   await page.getByRole('button', { name: 'Đã hoàn thành', exact: true }).click()
   await page.getByLabel('Tìm công việc').fill('Bài tập đã chỉnh sửa')
@@ -36,9 +35,9 @@ test('công việc: tạo, sửa, lọc, hoàn thành, lưu và xóa', async ({ 
   const task = (await stored(page)).tasks.find(
     (t: { title: string }) => t.title === 'Bài tập đã chỉnh sửa',
   )
-  expect(task.status).toBe('done')
-  expect(task.priority).toBe('high')
-  expect(task.subjectId).toBe('math')
+  expect(task?.status).toBe('done')
+  expect(task?.priority).toBe('high')
+  expect(task?.subjectId).toBe('math')
   await page.getByRole('button', { name: 'Bài tập đã chỉnh sửa', exact: true }).click()
   await page.getByRole('button', { name: 'Xóa', exact: true }).click()
   await page
@@ -55,6 +54,7 @@ test('lịch và môn học: tạo, sửa, xem chi tiết, xóa vẫn giữ côn
   await page.getByRole('button', { name: 'Thêm môn học', exact: true }).click()
   await page.getByLabel('Tên môn học').fill('Vật lý kiểm thử')
   await page.getByRole('button', { name: 'Lưu môn học' }).click()
+  await synced(page)
   await page.reload()
   await page.getByRole('button', { name: 'Sửa Vật lý kiểm thử' }).click()
   await page.getByLabel('Tên môn học').fill('Vật lý đại cương')
@@ -68,6 +68,7 @@ test('lịch và môn học: tạo, sửa, xem chi tiết, xóa vẫn giữ côn
   await page.getByLabel('Giờ bắt đầu').fill('18:30')
   await page.getByLabel('Thời lượng').fill('45')
   await page.getByRole('button', { name: 'Lưu lịch học' }).click()
+  await synced(page)
   await page.reload()
   await page.locator('.day-event').filter({ hasText: 'Học nhóm kiểm thử' }).click()
   await page.getByLabel('Tên sự kiện').fill('Học nhóm đã sửa')
@@ -99,6 +100,7 @@ test('ghi chú tự lưu, ghim, tìm và xóa; command palette dùng bàn phím'
   await page.getByLabel('Tiêu đề ghi chú').fill('Ghi chú kiểm thử')
   await page.getByLabel('Nội dung ghi chú').fill('Nội dung được lưu sau khi tải lại.')
   await page.getByRole('button', { name: 'Ghim ghi chú', exact: true }).click()
+  await synced(page)
   await page.reload()
   await expect(page.getByLabel('Nội dung ghi chú')).toHaveValue(
     'Nội dung được lưu sau khi tải lại.',
@@ -137,20 +139,24 @@ test('Pomodoro chạy qua điều hướng, tải lại, tạm dừng và lưu �
     .getByRole('button', { name: 'Tổng quan' })
     .click()
   await page.clock.fastForward(20000)
+  await synced(page)
   await page.reload()
+  await synced(page)
   await page.clock.fastForward(40000)
   await expect.poll(async () => (await stored(page)).sessions.length).toBe(initialSessions + 1)
+  await synced(page)
   await page.reload()
   expect((await stored(page)).sessions.length).toBe(initialSessions + 1)
   expect((await stored(page)).timer.mode).toBe('short')
   const session = (await stored(page)).sessions.at(-1)
-  expect(session.subjectId).toBe('math')
-  expect(session.taskId).toBe('t2')
+  expect(session?.subjectId).toBe('math')
+  expect(session?.taskId).toBe('t2')
 })
 
 test('theme, xác nhận reset và dữ liệu hỏng', async ({ page }) => {
   await go(page, 'settings')
   await page.getByRole('button', { name: 'Tối', exact: true }).click()
+  await synced(page)
   await page.reload()
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
   await page.getByRole('button', { name: 'Xóa toàn bộ dữ liệu', exact: true }).click()
@@ -161,11 +167,14 @@ test('theme, xác nhận reset và dữ liệu hỏng', async ({ page }) => {
     .getByRole('dialog')
     .getByRole('button', { name: 'Xóa toàn bộ dữ liệu', exact: true })
     .click()
+  await synced(page)
   await page.reload()
   expect((await stored(page)).tasks).toHaveLength(0)
   expect((await stored(page)).notes).toHaveLength(0)
   await page.evaluate(() => localStorage.setItem('studyflow:data:v1', '{bad'))
+  await synced(page)
   await page.reload()
+  await page.getByRole('button', { name: 'Nhập dữ liệu cũ', exact: true }).click()
   await expect(page.getByRole('alert')).toContainText('Dữ liệu cũ không đọc được')
   await expect(page.locator('h1')).toHaveText('Cài đặt')
 })
@@ -201,13 +210,18 @@ test('mọi trang ở desktop và mobile không tràn hoặc lỗi console', asy
 test('kéo thả Kanban và thêm công việc trực tiếp vào cột', async ({ page }) => {
   await go(page, 'tasks')
   const source = page.locator('.kanban-card').filter({ hasText: 'Ôn chương 3 Toán cao cấp' })
-  await source.dragTo(page.locator('.kanban-column').nth(2))
+  await page.evaluate(() => document.fonts.ready)
+  await expect(source).toHaveCSS('opacity', '1')
+  await expect(source).toHaveCSS('transform', 'none')
+  // Kéo từ phần đầu thẻ và thả vào tiêu đề cột, tránh auto-scroll ở tâm cột dài.
+  await source.dragTo(page.locator('.kanban-heading.done'), { sourcePosition: { x: 20, y: 20 } })
   await expect
     .poll(
       async () =>
-        (await stored(page)).tasks.find((task: { id: string }) => task.id === 't2').status,
+        (await stored(page)).tasks.find((task: { id: string }) => task.id === 't2')?.status,
     )
     .toBe('done')
+  expect((await stored(page)).tasks.find((task) => task.id === 't4')?.status).toBe('todo')
   await page.getByRole('button', { name: 'Thêm công việc đang thực hiện', exact: true }).click()
   await expect(page.getByRole('dialog')).toHaveAccessibleName('Thêm công việc')
   await page.getByLabel('Tên công việc').fill('Việc mới trong cột')
@@ -257,6 +271,7 @@ test('ghi chú tạo từ command palette khi trang ghi chú đang mở', async 
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await expect(page.getByLabel('Nội dung ghi chú')).toHaveValue('')
   await page.getByLabel('Nội dung ghi chú').fill('Một ghi chú mới')
+  await synced(page)
   await page.reload()
   await expect(page.getByLabel('Nội dung ghi chú')).toHaveValue('Một ghi chú mới')
 })
@@ -266,14 +281,19 @@ test('đồng bộ thay đổi giữa hai thẻ và lưu trạng thái thu gọn
   const other = await context.newPage()
   await go(other, 'tasks')
   await page.getByRole('button', { name: 'Hoàn thành: Ôn chương 3 Toán cao cấp' }).click()
+  await synced(page)
+  await other.evaluate(() => window.dispatchEvent(new Event('focus')))
   await expect(
     other.getByRole('button', { name: 'Mở lại: Ôn chương 3 Toán cao cấp' }),
   ).toBeVisible()
   await other.getByRole('button', { name: 'Mở lại: Ôn chương 3 Toán cao cấp' }).click()
+  await synced(other)
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')))
   await expect(
     page.getByRole('button', { name: 'Hoàn thành: Ôn chương 3 Toán cao cấp' }),
   ).toBeVisible()
   await page.getByRole('button', { name: 'Thu gọn thanh bên' }).click()
+  await synced(page)
   await page.reload()
   await expect(page.locator('.app-shell')).toHaveClass(/is-collapsed/)
 })

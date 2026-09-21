@@ -5,3 +5,5 @@ package-lock.json
 test-results
 playwright-report
 SPEC.md
+
+dist-e2e

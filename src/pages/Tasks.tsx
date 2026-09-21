@@ -139,7 +139,9 @@ export default function Tasks() {
               onDragLeave={() => setOver('')}
               onDrop={(e) => {
                 e.preventDefault()
-                if (dragging) move(dragging, status)
+                // Lấy ID từ thao tác kéo, không phụ thuộc nhịp cập nhật state của React.
+                const taskId = e.dataTransfer.getData('text/plain')
+                if (data.tasks.some((task) => task.id === taskId)) move(taskId, status)
                 setDragging('')
                 setOver('')
               }}
@@ -264,7 +266,7 @@ function TaskCardShell({
       inert={!isPresent}
       aria-hidden={!isPresent}
       className={`kanban-card ${dragging ? 'dragging' : ''}`}
-      draggable
+      draggable={isPresent}
       onDragStartCapture={(event) => {
         event.dataTransfer.setData('text/plain', taskId)
         event.dataTransfer.effectAllowed = 'move'

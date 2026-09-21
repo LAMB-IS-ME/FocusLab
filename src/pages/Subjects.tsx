@@ -60,7 +60,7 @@ function SubjectEditor({ subject, onClose }: { subject?: Subject; onClose: () =>
                 )
               : [...current.subjects, { ...draft, name: draft.name.trim() }],
           }))
-          toast('Đã lưu môn học')
+          toast('Đã cập nhật môn học')
           onClose()
         }}
       >

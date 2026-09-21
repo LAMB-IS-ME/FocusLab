@@ -14,9 +14,13 @@ export default defineConfig({
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
-    command: 'npm run build && npm run preview -- --port 4173',
+    command: 'npx vite build --outDir dist-e2e && npx vite preview --outDir dist-e2e --port 4173',
+    env: {
+      VITE_SUPABASE_URL: 'https://focuslab-test.supabase.co',
+      VITE_SUPABASE_ANON_KEY: 'sb_publishable_focuslab_test_only',
+    },
     url: 'http://127.0.0.1:4173',
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
     timeout: 120000,
   },
 })

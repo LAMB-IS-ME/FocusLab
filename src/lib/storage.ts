@@ -1,7 +1,8 @@
 import { z } from 'zod'
 import type { AppData } from '../types'
-import { createDemoData, emptyData } from '../data/demo'
+import { emptyData } from '../data/demo'
 
+// Giữ chính xác khóa phiên bản cũ để người dùng nhập dữ liệu, không ghi dữ liệu mới vào đây.
 export const STORAGE_KEY = 'studyflow:data:v1'
 const id = z.string().max(200)
 const title = z.string().min(1).max(200)
@@ -87,17 +88,6 @@ export const dataSchema = z.object({
 export const taskSchema = dataSchema.shape.tasks.element
 export const eventSchema = dataSchema.shape.events.element
 
-export function clearRecoveryData(): boolean {
-  try {
-    for (const key of Object.keys(window.localStorage)) {
-      if (key.startsWith(`${STORAGE_KEY}:recovery:`)) window.localStorage.removeItem(key)
-    }
-    return true
-  } catch {
-    return false
-  }
-}
-
 export function loadData(storage: Storage = window.localStorage): {
   data: AppData
   warning: string
@@ -105,7 +95,8 @@ export function loadData(storage: Storage = window.localStorage): {
   let raw: string | null = null
   try {
     raw = storage.getItem(STORAGE_KEY)
-    if (raw === null) return { data: createDemoData(), warning: '' }
+    if (raw === null)
+      return { data: emptyData(), warning: 'Không tìm thấy dữ liệu cũ trong trình duyệt này.' }
     return { data: dataSchema.parse(JSON.parse(raw)), warning: '' }
   } catch {
     if (raw !== null) {
@@ -120,16 +111,8 @@ export function loadData(storage: Storage = window.localStorage): {
       data: emptyData(),
       warning:
         raw === null
-          ? 'Trình duyệt đang chặn lưu trữ. Dữ liệu chỉ được giữ trong lần mở này.'
-          : 'Dữ liệu cũ không đọc được. Ứng dụng đã mở không gian trống và cố gắng giữ bản sao khôi phục.',
+          ? 'Trình duyệt đang chặn đọc dữ liệu cũ.'
+          : 'Dữ liệu cũ không đọc được. Bản gốc vẫn được giữ nguyên; hãy chọn tệp sao lưu khác.',
     }
-  }
-}
-export function saveData(data: AppData): boolean {
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
-    return true
-  } catch {
-    return false
   }
 }

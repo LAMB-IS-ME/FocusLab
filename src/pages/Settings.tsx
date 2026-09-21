@@ -4,9 +4,12 @@ import { useApp } from '../hooks/useApp'
 import { Button, ConfirmDialog, PageHeading } from '../components/ui'
 import type { Settings as AppSettings } from '../types'
 import { dateKey } from '../utils/date'
+import { DataTransfer } from '../components/DataTransfer'
+import { useAuth } from '../hooks/useAuth'
 
 export default function Settings() {
-  const { data, setData, toast, reset } = useApp()
+  const { data, setData, toast, reset, logout, syncStatus } = useApp()
+  const { session } = useAuth()
   const [draft, setDraft] = useState({
     focus: data.settings.focus,
     short: data.settings.short,
@@ -20,7 +23,7 @@ export default function Settings() {
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `studyflow-${dateKey()}.json`
+    link.download = `focuslab-${dateKey()}.json`
     link.click()
     setTimeout(() => URL.revokeObjectURL(url), 1000)
     toast('Đã xuất bản sao dữ liệu')
@@ -114,7 +117,7 @@ export default function Settings() {
                     },
             }))
             setError('')
-            toast('Đã lưu thời gian và mục tiêu')
+            toast('Đã cập nhật thời gian và mục tiêu')
           }}
         >
           <div className="section-heading">
@@ -184,10 +187,25 @@ export default function Settings() {
           <div className="data-notice">
             <ShieldCheck size={20} />
             <p>
-              Dữ liệu được lưu trong trình duyệt trên thiết bị này. Không cần tài khoản, không gửi
-              lên máy chủ. Hãy xuất bản sao trước khi xóa dữ liệu trình duyệt.
+              Dữ liệu được lưu riêng theo tài khoản trên đám mây. Chờ trạng thái “Đã đồng bộ” trước
+              khi đóng trang. Hãy xuất bản sao để giữ thêm một bản dự phòng.
             </p>
           </div>
+          <div className="settings-data-row">
+            <div>
+              <h3>Tài khoản</h3>
+              <p>{session?.user.email}</p>
+            </div>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                void logout()
+              }}
+            >
+              Đăng xuất
+            </Button>
+          </div>
+          <DataTransfer />
           <div className="settings-data-row">
             <div>
               <h3>Xuất bản sao dữ liệu</h3>
@@ -203,14 +221,18 @@ export default function Settings() {
               <h3 className="danger-text">Đặt lại ứng dụng</h3>
               <p>Xóa dữ liệu hiện tại và bắt đầu với không gian trống.</p>
             </div>
-            <Button variant="danger" onClick={() => setResetting(true)}>
+            <Button
+              variant="danger"
+              disabled={syncStatus !== 'saved'}
+              onClick={() => setResetting(true)}
+            >
               <Trash2 size={16} />
               Xóa toàn bộ dữ liệu
             </Button>
           </div>
         </section>
         <p className="page-footer">
-          StudyFlow · Phiên bản 1.0 · Được tạo cho những ngày học tập tốt hơn
+          FocusLab · Phiên bản 1.0 · Được tạo cho những ngày học tập tốt hơn
         </p>
       </div>
       {resetting && (
@@ -220,8 +242,9 @@ export default function Settings() {
           label="Xóa toàn bộ dữ liệu"
           onClose={() => setResetting(false)}
           onConfirm={() => {
-            reset()
-            setDraft({ focus: 25, short: 5, long: 15, weeklyGoal: 20 })
+            void reset().then((success) => {
+              if (success) setDraft({ focus: 25, short: 5, long: 15, weeklyGoal: 20 })
+            })
           }}
         />
       )}

@@ -1,106 +1,180 @@
-# StudyFlow 🌱
+# FocusLab 🌱
 
 **Không gian học tập của bạn — từng việc nhỏ, từng bước tiến.**
 
-StudyFlow là ứng dụng quản lý học tập dành cho sinh viên Việt Nam, được phát triển trong repository **FocusLab**. Toàn bộ ứng dụng chạy trong trình duyệt, không có máy chủ, tài khoản hay khóa API. Giao diện, dữ liệu mẫu và thông báo đều bằng tiếng Việt.
+FocusLab giúp quản lý công việc, môn học, lịch học, ghi chú và Pomodoro bằng giao diện tiếng Việt. Frontend React/TypeScript chạy trên GitHub Pages; Supabase quản lý tài khoản và lưu dữ liệu PostgreSQL riêng cho từng người. Không cần chạy backend trên máy cá nhân.
 
-## Có gì trong ứng dụng?
+## Tính năng
 
-- **Tổng quan:** công việc hôm nay, chuỗi ngày học, biểu đồ theo tuần, mục tiêu và lịch sắp tới.
-- **Công việc:** bảng Kanban, tạo/sửa/xóa, ưu tiên, hạn nộp, tìm kiếm, lọc theo môn và thời gian. Kéo thả trên máy tính hoặc dùng ô trạng thái bằng bàn phím/cảm ứng.
-- **Tập trung:** Pomodoro 25/5/15 phút, tạm dừng, tiếp tục, đặt lại, bỏ qua, chọn môn/công việc; nghỉ dài sau bốn phiên. Lịch sử và thời gian theo môn cập nhật tự động.
-- **Lịch:** chuyển tháng, chọn ngày, xem hạn công việc, tạo/sửa/xóa lịch học. Dùng phím mũi tên để chuyển ngày.
-- **Môn học:** tùy chỉnh màu/biểu tượng, theo dõi tiến độ và xem lịch sử từng môn. Xóa môn vẫn giữ lại các công việc và phiên học.
-- **Ghi chú:** văn bản thuần, tự lưu, tìm kiếm, ghim và xóa có xác nhận.
-- **Cài đặt:** giao diện sáng/tối/theo hệ thống, thời gian Pomodoro, mục tiêu tuần, xuất bản sao JSON và đặt lại dữ liệu.
-- **Thao tác nhanh:** `Ctrl + K` hoặc `Cmd + K`, phím mũi tên để chọn, `Enter` để mở, `Escape` để đóng.
+- Tổng quan, biểu đồ tuần, chuỗi ngày học, thời gian theo môn và mục tiêu tuần từ dữ liệu tài khoản.
+- Công việc Kanban, kéo thả, tìm kiếm, lọc, ưu tiên, hạn nộp và trạng thái hoàn thành.
+- Môn học có màu/biểu tượng; xóa môn vẫn giữ công việc và lịch sử ở nhóm chưa phân môn.
+- Lịch học tương tác; ghi chú văn bản thuần tự lưu, tìm kiếm và ghim.
+- Pomodoro tùy chỉnh, tạm dừng, tiếp tục, nghỉ dài sau bốn phiên. Chỉ phiên tập trung hoàn thành được tính vào thống kê.
+- Giao diện sáng/tối/theo hệ thống, mục tiêu tuần, thanh bên thu gọn và giao diện mobile.
+- Đăng ký, đăng nhập email/mật khẩu, giữ phiên và đăng xuất.
+- Nhập dữ liệu trình duyệt cũ hoặc bản sao JSON; xuất JSON; tạo dữ liệu mẫu theo lựa chọn; đặt lại dữ liệu có xác nhận.
+- Thao tác nhanh bằng `Ctrl + K` / `Cmd + K`, hỗ trợ bàn phím và giảm chuyển động.
 
-Thanh bên có thể thu gọn; điện thoại dùng thanh điều hướng phía dưới và menu riêng. Ứng dụng hỗ trợ bàn phím, hộp thoại giữ tiêu điểm và tùy chọn giảm chuyển động của hệ điều hành.
+## Kiến trúc và Supabase
 
-## Công nghệ
+React 19, TypeScript, Vite, Tailwind CSS, Framer Motion, Recharts, Lucide và Zod. Font Be Vietnam Pro được đóng gói cùng ứng dụng.
 
-React 19, TypeScript, Vite, Tailwind CSS 4, Framer Motion, Recharts, Lucide React. Zod kiểm tra cấu trúc dữ liệu đã lưu. Phông Be Vietnam Pro được đóng gói cùng ứng dụng, không phụ thuộc dịch vụ phông bên ngoài. Vitest kiểm tra logic, Playwright kiểm thử trình duyệt.
+```text
+src/components/                 Giao diện dùng chung và nhập dữ liệu
+src/pages/                      Auth và bảy trang học tập hiện có
+src/hooks/useAuth.tsx            Theo dõi session Supabase Auth
+src/hooks/useApp.tsx             Điều hướng hash, thao tác UI và đồng hồ
+src/hooks/useCloudData.ts        Tải, hàng chờ lưu, bản nháp, retry và làm mới
+src/services/auth.ts            Đăng ký / đăng nhập / đăng xuất
+src/services/workspace.ts       API database qua Supabase JS RPC
+src/services/workspaceChanges.ts So sánh hàng thay đổi và ghép bản nháp
+src/services/importData.ts      Nhập dữ liệu không ghi đè
+src/lib/supabase.ts              Client dùng biến môi trường công khai
+src/lib/storage.ts               Kiểm tra Zod, chỉ đọc dữ liệu trình duyệt cũ
+src/types/database.ts            Hợp đồng TypeScript cho RPC
+supabase/migrations/             Schema, RLS, trigger và các hàm PostgreSQL
+src/lib/database.test.ts         Kiểm thử migration và RLS trên PostgreSQL nhúng
+tests/                         Kiểm thử trình duyệt với API mô phỏng
+```
 
-## Cài đặt và chạy
+UI giữ React Context hiện có. Service chỉ gửi những hàng đã thay đổi, không ghi lại toàn bộ database. RPC `apply_workspace_changes` ghi các thay đổi liên quan trong một transaction; lỗi một hàng sẽ rollback toàn bộ. RPC trả snapshot sau khi lưu để ghép các lần sửa mới xảy ra trong lúc request đang chạy; retry giữ nguyên payload của lần gửi chưa nhận được phản hồi. Không có Express, Firebase hoặc backend tự host.
 
-Cần **Node.js 22.12 trở lên** và npm. Nên dùng Node.js 22 LTS.
+`get_workspace` đọc snapshot nhất quán; Zod kiểm tra cấu trúc trước khi hiển thị. Đây là thiết kế cho dữ liệu cá nhân có dung lượng nhỏ; khi lịch sử tăng lớn cần phân trang và tổng hợp thống kê phía database.
+
+## Database schema
+
+Chạy **toàn bộ** [supabase/migrations/001_initial_schema.sql](supabase/migrations/001_initial_schema.sql) **một lần** trong **Supabase → SQL Editor → New query → Run** trên project mới. Không cần tự tạo bảng. Migration có transaction; không chạy lại migration đã áp dụng thành công.
+
+Nếu đã chạy bản `001` ở phiên tích hợp trước, chỉ chạy [002_sync_snapshot.sql](supabase/migrations/002_sync_snapshot.sql) để nâng cấp RPC lưu dữ liệu sang trả snapshot, bảo vệ nhập trùng ID và retry sau mất phản hồi. File `002` không xóa bảng/dữ liệu, dùng được cả sau bản `001` hiện tại. Khi dùng migration runner, áp dụng các file theo thứ tự `001` rồi `002`.
+
+| Bảng              | Nội dung                                                                       |
+| ----------------- | ------------------------------------------------------------------------------ |
+| `profiles`        | `user_id`, tên hiển thị, thời điểm tạo/cập nhật                                |
+| `subjects`        | Môn học, màu, biểu tượng                                                       |
+| `tasks`           | Công việc, mô tả, môn, ưu tiên, hạn, trạng thái và ngày hoàn thành             |
+| `notes`           | Tiêu đề, nội dung, ghim, thời điểm cập nhật                                    |
+| `calendar_events` | Sự kiện, môn, ngày, giờ bắt đầu và thời lượng phút                             |
+| `focus_sessions`  | Môn, công việc, thời lượng phút và thời điểm hoàn thành                        |
+| `user_settings`   | Theme, thời gian tập trung/nghỉ, mục tiêu giờ mỗi tuần và trạng thái thanh bên |
+
+Mọi bảng có `user_id` liên kết `auth.users`. Các entity dùng khóa chính ghép `(user_id, id)` với `id` dạng text để giữ mã dữ liệu cũ. Khóa ngoại ghép ngăn liên kết dữ liệu của tài khoản khác. Xóa user trong Supabase Auth sẽ cascade dữ liệu của user đó. Xóa môn/công việc chỉ bỏ liên kết tương ứng trong lịch sử.
+
+RLS bật trên **cả bảy bảng**, có policy SELECT/INSERT/UPDATE/DELETE riêng theo `auth.uid() = user_id`. `WITH CHECK` ngăn đổi chủ sở hữu. Vai trò `anon` không được truy cập bảng hoặc RPC. RPC dùng `security invoker`; lấy chủ sở hữu từ session, không nhận `user_id` từ biểu mẫu. Tham số `expected_user_id` chỉ chặn request còn chờ của tài khoản cũ.
+
+Trigger tạo profile và settings mặc định khi đăng ký; không seed công việc hay ghi chú. Hàm trigger dùng `security definer` với `search_path` rỗng và không cho client gọi trực tiếp. Migration cũng tạo profile/settings cho user đã tồn tại.
+
+## Thiết lập Supabase và auth
+
+1. Tạo project Supabase, lưu mật khẩu database ở nơi riêng. Chạy migration ở trên.
+2. Trong **Authentication → Sign In / Providers**, bật **Email**, cho phép đăng ký và bật **Confirm email**. Nên đặt độ dài mật khẩu tối thiểu 8 ký tự để khớp form đăng ký.
+3. Trong **Authentication → URL Configuration**, đặt:
+
+   **Site URL**:
+
+   ```text
+   https://husterlaydrl.id.vn/
+   ```
+
+   **Redirect URLs** (mỗi URL một mục):
+
+   ```text
+   https://husterlaydrl.id.vn/
+   https://lamb-is-me.github.io/FocusLab/
+   http://localhost:5173/
+   http://localhost:4173/
+   ```
+
+   Nếu mở local qua `127.0.0.1`, thêm `http://127.0.0.1:5173/` và `http://127.0.0.1:4173/`. Giữ dấu `/` cuối và đúng chữ hoa `FocusLab`. URL xác nhận không chứa `#tasks`; hash được Supabase dùng khi nhận session.
+
+4. Giữ link xác nhận mặc định trong email template. Với người dùng thực tế, cấu hình SMTP của bạn trong Supabase Auth và kiểm tra giới hạn gửi email của project.
+5. Lấy **Project URL** và khóa **publishable** hoặc **legacy anon** trong phần **Connect / Project Settings → API Keys**. Không dùng database password, secret key hay `service_role`.
+
+Người dùng đăng ký rồi mở email xác nhận. Nếu Supabase trả session ngay, app mở workspace; nếu cần xác nhận email, form thông báo kiểm tra hộp thư. `onAuthStateChange` điều khiển app, SDK khôi phục/làm mới session sau reload. Thay tài khoản sẽ tháo state cũ trước khi tải dữ liệu mới. Đăng xuất chờ hàng chờ lưu hoàn tất; nếu lưu lỗi cần retry trước để tránh bỏ mất thay đổi.
+
+## Local development và environment variables
+
+Cần **Node.js >= 22.12.0** và npm.
 
 ```bash
-git clone https://github.com/LAMB-IS-ME/FocusLab.git
-cd FocusLab
 npm ci
+cp .env.example .env
+```
+
+Điền vào `.env` trên máy bạn:
+
+```dotenv
+VITE_SUPABASE_URL=https://<project-ref>.supabase.co
+VITE_SUPABASE_ANON_KEY=<publishable-key-hoặc-anon-key>
+```
+
+```bash
 npm run dev
 ```
 
-Mở địa chỉ Vite in trong terminal, thường là `http://localhost:5173`.
+Mở `http://localhost:5173/`. Vite đọc `.env` tại thư mục gốc; restart dev server sau khi thay biến. Đây là biến **build-time**: sửa trên GitHub rồi cần chạy workflow build lại. Khi thiếu/sai cấu hình, app hiện hướng dẫn bằng tiếng Việt, không mở workspace giả hoặc màn hình trắng.
+
+`.gitignore` bỏ qua `.env`, `.env.*` (trừ `.env.example`), `node_modules`, `dist`, `dist-e2e`, cache, báo cáo test và coverage. Không commit `.env` thật.
+
+## Persistence, bản nháp và nhập dữ liệu cũ
+
+Supabase là nguồn dữ liệu chính cho tasks, subjects, notes, calendar events, focus sessions và settings. Sau khi tải lại hoặc đăng nhập thiết bị khác, app đọc lại từ cloud. Tab đang mở làm mới mỗi 30 giây hoặc khi lấy lại focus, khi không còn thay đổi chờ lưu.
+
+Các lần sửa được gom trong khoảng 350 ms rồi gửi tuần tự. Header và ghi chú hiển thị **Đang lưu / Đã đồng bộ / Chưa đồng bộ**. Lỗi mạng giữ thay đổi trong state và bản nháp `sessionStorage` theo user của tab, có nút thử lại và tự thử khi mạng trở lại. Bản nháp không phải chế độ offline hoàn chỉnh: không thể mở lần đầu khi không tải được cloud. Không đóng tab có thay đổi chưa đồng bộ; xuất JSON trong Cài đặt nếu cần giữ riêng.
+
+SDK giữ token auth trong localStorage. Đồng hồ và bản nháp tạm nằm ở `sessionStorage`, tách theo user; dữ liệu đã đồng bộ không được ghi vào kho dữ liệu local cũ. Đồng hồ dùng mốc kết thúc tuyệt đối, chạy qua điều hướng/reload trong cùng tab. Sau khi đóng hẳn tab, đồng hồ chưa hoàn thành không tiếp tục trên thiết bị khác. Session đã hoàn thành dùng ID cố định để retry không nhân đôi. Không cần server chạy đồng hồ.
+
+Khi sửa cùng một hàng trên nhiều thiết bị, bản ghi đến sau cùng có hiệu lực; chưa có merge nội dung ghi chú theo từng ký tự. Các hàng không sửa không bị ghi đè.
+
+Để chuyển dữ liệu cũ:
+
+1. Đăng nhập trên **đúng trình duyệt và tên miền đã dùng trước đây**.
+2. Mở **Cài đặt → Nhập dữ liệu cũ**, xem số lượng rồi xác nhận. Hoặc chọn bản sao JSON đã xuất từ bản cũ.
+3. Chọn checkbox nếu muốn áp dụng cả cài đặt trong bản sao; mặc định giữ cài đặt cloud.
+4. Chờ **Đã đồng bộ**, kiểm tra dữ liệu trên thiết bị khác.
+
+Khóa legacy `studyflow:data:v1` được giữ nguyên chỉ để đọc/chuyển dữ liệu; đây là ngoại lệ có chủ đích của đổi thương hiệu. Nhập giữ ID ổn định, giữ mục cloud đã có và không nhân đôi khi nhập lại cùng bản sao. Không xóa bản gốc, kể cả khi JSON lỗi. Trình duyệt không đọc được localStorage từ domain khác: hãy xuất JSON trên domain cũ rồi nhập trên domain mới. Dữ liệu mẫu chỉ được tạo khi nhấn **Tạo dữ liệu mẫu**.
+
+## Reset data
+
+**Cài đặt → Xuất dữ liệu** để sao lưu trước. Sau đó **Xóa toàn bộ dữ liệu**, đọc và xác nhận hộp thoại. RPC `reset_workspace` xóa dữ liệu học tập và đặt settings mặc định **chỉ cho tài khoản đang đăng nhập**, giữ tài khoản/profile. Bản dữ liệu legacy trên trình duyệt vẫn được giữ để bạn tự quyết định xử lý. Không reset database bằng cách drop schema khi đang có dữ liệu thật.
+
+## Build và kiểm thử
 
 ```bash
-npm run check       # Kiểm tra TypeScript
-npm run format:check # Kiểm tra định dạng mã nguồn
-npm test            # Kiểm tra dữ liệu, đồng hồ và ngày
-npm run build       # Kiểm tra TypeScript và tạo thư mục dist/
-npm run preview     # Xem bản đã build tại http://localhost:4173
-```
-
-Kiểm thử trình duyệt:
-
-```bash
+npm run check
+npm test
+npm run build
+npm run preview
 npx playwright install chromium
 npm run test:e2e
+npm run format:check
 ```
 
-Trên Linux nếu thiếu thư viện hệ thống, chạy `npx playwright install --with-deps chromium`. Bộ kiểm thử tự build và mở máy chủ xem trước; kiểm tra CRUD, dữ liệu sau tải lại, Pomodoro, thao tác nhanh, giao diện tối, xác nhận xóa, dữ liệu hỏng và kích thước 320–1440 px.
+- Vitest kiểm tra timer, ngày, validation, diff/merge/import và chạy migration thật trên PostgreSQL nhúng PGlite. Test RLS dùng role `authenticated`/`anon`, hai user và `auth.uid()` mô phỏng; kiểm tra chống đọc/ghi chéo user, khóa ngoại, rollback, trigger và reset.
+- Playwright mô phỏng HTTP của Supabase để kiểm tra auth UI, CRUD, session/reload, retry/bản nháp, đổi tài khoản, timer, keyboard, mobile và tài nguyên dưới root hoặc `/FocusLab/`.
+- Test e2e build riêng vào `dist-e2e` với URL/key giả chỉ dùng trong fixture; không thay thế `dist` phát hành và không gọi project Supabase thật.
+- Các test này không xác minh việc gửi email, cấu hình SMTP/redirect hoặc RLS **đã triển khai** trên project thật. Sau khi cấu hình, cần đăng ký hai tài khoản thật và kiểm tra đăng nhập, lưu trên hai thiết bị, đăng xuất và cô lập dữ liệu.
 
-Ngoài ra, bộ kiểm thử kiểm tra độ tương phản và nhãn truy cập ở cả hai giao diện, đồng bộ giữa hai thẻ, kéo thả Kanban và tài nguyên khi triển khai dưới `/studyflow/` hoặc `/FocusLab/`.
+## Deploy GitHub Pages
 
-## Triển khai GitHub Pages
+Giữ workflow [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml), tên **Triển khai FocusLab**. Trong **Settings → Secrets and variables → Actions**, tạo hai repository secrets (hoặc variables):
 
-Workflow có sẵn trong [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml).
+| Tên chính xác            | Giá trị                                                |
+| ------------------------ | ------------------------------------------------------ |
+| `VITE_SUPABASE_URL`      | Project URL, ví dụ `https://<project-ref>.supabase.co` |
+| `VITE_SUPABASE_ANON_KEY` | Publishable key hoặc legacy anon key của cùng project  |
 
-1. Đưa toàn bộ mã nguồn và `package-lock.json` lên nhánh `main`.
-2. Trong repository GitHub, mở **Settings → Pages → Build and deployment → Source**, chọn **GitHub Actions**.
-3. Mở **Actions → Triển khai StudyFlow → Run workflow**, chọn `main` và chạy. Các lần đẩy mã lên `main` sau đó tự chạy lại.
-4. Workflow cài thư viện, kiểm thử, build và xuất bản. Đường dẫn trang được hiển thị trong bước triển khai.
+Workflow kiểm tra chúng không rỗng, chạy unit test/type check, build, e2e rồi deploy. E2e giữ `continue-on-error: true` theo workflow cũ để lỗi accessibility không chặn phát hành. Bản build e2e luôn nằm riêng.
 
-Với repo hiện tại, địa chỉ dự kiến là **https://lamb-is-me.github.io/FocusLab/**. Nếu đổi tên repo thành `studyflow`, ứng dụng chạy tại **https://<tên-người-dùng>.github.io/studyflow/**.
+Trong **Settings → Pages → Build and deployment**, chọn **GitHub Actions**. Push code lên `main` hoặc chạy **Actions → Triển khai FocusLab → Run workflow**.
 
-`vite.config.ts` dùng `base: './'`, nên tài nguyên dùng đường dẫn tương đối, hỗ trợ cả hai tên repo và tên miền riêng. Điều hướng dùng phần `#` của URL (ví dụ `/#tasks`) nên tải lại trang không gây lỗi 404 trên GitHub Pages. Với tên miền riêng, cấu hình tên miền trong GitHub Pages và thêm `public/CNAME` chứa tên miền nếu cần. Không cần sửa mã điều hướng.
+`base: './'` và hash routing được giữ nguyên. Refresh `/#tasks` hoặc `/FocusLab/#tasks` không cần rewrite server. URL Pages mặc định: `https://lamb-is-me.github.io/FocusLab/`. Custom domain dự kiến: **husterlaydrl.id.vn**. Giữ cấu hình DNS/Custom domain hiện tại trong GitHub Pages; repo ban đầu không có `public/CNAME`, thay đổi này không tự đổi cấu hình domain. Nếu domain chưa được cấu hình, đặt chính xác `husterlaydrl.id.vn` trong **Pages → Custom domain**, hoàn tất DNS theo hướng dẫn GitHub và bật HTTPS.
 
-Có thể triển khai thư mục `dist/` lên bất kỳ dịch vụ lưu trữ trang tĩnh nào. Tham khảo [hướng dẫn triển khai của Vite](https://vite.dev/guide/static-deploy).
+## Bảo mật
 
-## Cấu trúc chính
+Khóa Vite xuất hiện trong bundle công khai, dù được nhập dưới GitHub Secrets. Chỉ dùng publishable/anon key; bảo vệ dữ liệu bằng RLS. Không dùng `service_role`, `sb_secret_...`, mật khẩu database hoặc tài khoản test trong frontend. Client từ chối các dạng khóa không phải publishable/anon; PostgreSQL mới là nơi thực thi phân quyền.
 
-```text
-src/
-├── components/       # Bố cục, hộp thoại, biểu đồ, đồng hồ và biểu mẫu dùng chung
-├── data/demo.ts      # Dữ liệu mẫu theo ngày hiện tại và trạng thái trống
-├── hooks/            # Trạng thái dùng chung, thống kê và cơ chế lưu
-├── lib/              # Kiểm tra dữ liệu, lưu trữ và logic chuyển phiên
-├── pages/            # Bảy màn hình chính, tải riêng khi cần
-├── types/            # Kiểu dữ liệu ứng dụng
-├── utils/            # Ngày địa phương, định dạng tiếng Việt, mã định danh
-├── App.tsx           # Điều hướng, thao tác nhanh, xử lý lỗi giao diện
-├── main.tsx          # Khởi động React, phông chữ
-└── styles.css        # Hệ màu, thành phần và bố cục thích ứng
-tests/                # Kiểm thử trình duyệt
-public/               # Biểu tượng ứng dụng
-.github/workflows/    # Quy trình kiểm tra và triển khai
-```
+Không đưa token, mật khẩu hay bản sao dữ liệu thật vào repo, log hoặc ảnh kiểm thử. Xem [hướng dẫn RLS của Supabase](https://supabase.com/docs/guides/database/postgres/row-level-security) và [database functions](https://supabase.com/docs/guides/database/functions) khi mở rộng schema. Không tắt RLS để chữa lỗi kết nối.
 
-## Dữ liệu được lưu như thế nào?
-
-- Khóa chính: **`studyflow:data:v1`** trong `localStorage`. Một tài liệu JSON có phiên bản chứa công việc, môn học, sự kiện, ghi chú, phiên tập trung, cài đặt và đồng hồ.
-- `src/lib/storage.ts` là lớp lưu trữ duy nhất; Zod kiểm tra dữ liệu trước khi khôi phục. React Context quản lý trạng thái và lưu khi thay đổi. Thẻ trình duyệt khác cùng nguồn được đồng bộ bằng sự kiện `storage`; khi sửa đồng thời, thay đổi được ghi sau cùng có hiệu lực.
-- Dữ liệu mẫu chỉ được tạo khi khóa chưa tồn tại. Danh sách trống đã lưu vẫn được giữ trống sau tải lại. Đặt lại ứng dụng tạo không gian trống, không nạp lại dữ liệu mẫu.
-- JSON hỏng hoặc cấu trúc sai được xử lý bằng không gian trống và thông báo; ứng dụng cố giữ bản gốc trong khóa `studyflow:data:v1:recovery:<thời-gian>`. Nếu bộ nhớ bị chặn hoặc đầy, ứng dụng thông báo và vẫn cho dùng trong phiên hiện tại.
-- Đồng hồ lưu **mốc kết thúc tuyệt đối**, nên chuyển trang, tải lại hoặc đưa thẻ xuống nền không làm bộ đếm chạy chậm dần. Khi mở lại, phiên đã hết giờ được ghi đúng một lần theo mã phiên. Giờ hoàn thành dùng mốc kết thúc gốc.
-- Nghỉ và các phiên bị bỏ qua/đặt lại không được tính thành thời gian học. Phiên tiếp theo chờ bạn bắt đầu, không tự chạy liên tục khi bạn rời máy. Môn/công việc được cố định sau khi bắt đầu phiên; đặt lại để đổi lựa chọn.
-- Tuần tính từ thứ Hai đến Chủ nhật theo giờ địa phương. Chuỗi ngày học cho phép hôm nay chưa có phiên nếu hôm qua vẫn học.
-
-Dữ liệu chỉ ở **trình duyệt và thiết bị hiện tại**, không tự đồng bộ giữa các thiết bị. Xóa dữ liệu trang hoặc đổi tên miền sẽ không mang theo dữ liệu cũ. Có thể xuất JSON trong Cài đặt để giữ bản sao; phiên bản hiện tại chưa có giao diện nhập lại. Ghi chú hỗ trợ văn bản thuần và được lưu ngay khi thay đổi.
-
-## Phạm vi triển khai
-
-Không có dịch vụ mạng ở thời gian chạy, hình ảnh bên ngoài hoặc khóa bí mật. Dữ liệu ví dụ hoàn toàn hư cấu. Ứng dụng chạy từ bản build tĩnh; cần tải tài nguyên lần đầu, chưa có chế độ cài đặt ngoại tuyến bằng service worker.
-
-Mã nguồn sử dụng giấy phép trong [LICENSE](LICENSE).
+Mã nguồn sử dụng giấy phép [MIT](LICENSE).

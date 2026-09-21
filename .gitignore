@@ -30,3 +30,6 @@ Thumbs.db
 *.swp
 *.swo
 *~
+
+# Bản build riêng cho kiểm thử, không đưa lên Pages
+dist-e2e/

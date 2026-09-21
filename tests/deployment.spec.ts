@@ -1,8 +1,8 @@
 import { readFile } from 'node:fs/promises'
 import { resolve, extname } from 'node:path'
-import { expect, test } from '@playwright/test'
+import { expect, test } from './fixtures'
 
-for (const base of ['studyflow', 'FocusLab']) {
+for (const base of ['', 'FocusLab']) {
   test(`tài nguyên và tải lại hoạt động tại /${base}/`, async ({ page }) => {
     const errors: string[] = []
     page.on('pageerror', (error) => errors.push(error.message))
@@ -16,15 +16,17 @@ for (const base of ['studyflow', 'FocusLab']) {
     }
     // Mô phỏng máy chủ tĩnh chỉ phục vụ nội dung dist dưới tên repository.
     await page.route('**/*', async (route) => {
-      const pathname = new URL(route.request().url()).pathname
-      if (!pathname.startsWith(`/${base}/`)) {
+      const url = new URL(route.request().url())
+      if (url.hostname === 'focuslab-test.supabase.co') return route.fallback()
+      const pathname = url.pathname
+      if (!pathname.startsWith(base ? `/${base}/` : '/')) {
         errors.push(`Đường dẫn tài nguyên sai: ${pathname}`)
         await route.fulfill({ status: 404 })
         return
       }
-      const relative = pathname.slice(base.length + 2) || 'index.html'
-      const file = resolve('dist', relative)
-      if (!file.startsWith(resolve('dist') + '/')) {
+      const relative = pathname.slice(base ? base.length + 2 : 1) || 'index.html'
+      const file = resolve('dist-e2e', relative)
+      if (!file.startsWith(resolve('dist-e2e') + '/')) {
         await route.fulfill({ status: 404 })
         return
       }
@@ -38,7 +40,7 @@ for (const base of ['studyflow', 'FocusLab']) {
         await route.fulfill({ status: 404 })
       }
     })
-    await page.goto(`/${base}/#tasks`)
+    await page.goto(`${base ? `/${base}/` : '/'}#tasks`)
     await expect(page.locator('h1')).toHaveText('Công việc')
     await page.reload()
     await expect(

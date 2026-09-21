@@ -1,4 +1,6 @@
-Bạn đang làm việc trong một GitHub repository mới có tên **StudyFlow**.
+> Tài liệu lịch sử của giai đoạn frontend. Kiến trúc hiện tại dùng Supabase Auth/PostgreSQL, dữ liệu mẫu do người dùng chủ động tạo. Xem README.md và supabase/migrations để triển khai.
+
+Bạn đang làm việc trong một GitHub repository mới có tên **FocusLab**.
 
 Repository hiện tại gần như trống hoàn toàn, chỉ có một file `README.md` trống hoặc gần như trống.
 
@@ -8,9 +10,9 @@ Không chỉ đề xuất kiến trúc hoặc đưa ra code snippet. Hãy thực
 
 # 1. Ý tưởng sản phẩm
 
-Xây dựng **StudyFlow**, một dashboard hỗ trợ học tập và quản lý năng suất cá nhân dành cho sinh viên.
+Xây dựng **FocusLab**, một dashboard hỗ trợ học tập và quản lý năng suất cá nhân dành cho sinh viên.
 
-StudyFlow nên có cảm giác như một sản phẩm SaaS/productivity hiện đại thực sự, không giống một bài tập demo hay admin dashboard chung chung.
+FocusLab nên có cảm giác như một sản phẩm SaaS/productivity hiện đại thực sự, không giống một bài tập demo hay admin dashboard chung chung.
 
 Ứng dụng hỗ trợ sinh viên quản lý:
 
@@ -114,7 +116,7 @@ File `README.md` phải viết **hoàn toàn bằng tiếng Việt**.
 
 README phải giải thích rõ:
 
-* StudyFlow là gì
+* FocusLab là gì
 * chức năng chính
 * công nghệ sử dụng
 * cách cài đặt
@@ -681,7 +683,7 @@ Khởi tạo:
 * notes
 * dữ liệu thống kê trong tuần
 
-Chỉ khởi tạo demo data khi chưa có dữ liệu StudyFlow trong `localStorage`.
+Chỉ khởi tạo demo data khi chưa có dữ liệu FocusLab trong `localStorage`.
 
 Không được overwrite dữ liệu người dùng mỗi lần reload.
 
@@ -782,12 +784,12 @@ Chuẩn bị project để deploy lên GitHub Pages.
 
 Tên repository dự kiến:
 
-`studyflow`
+`focuslab`
 
 Phải đảm bảo Vite config và asset path hoạt động ở:
 
 ```text
-https://<username>.github.io/studyflow/
+https://<username>.github.io/focuslab/
 ```
 
 Project cũng nên tương thích nếu sau này dùng custom domain.
@@ -812,7 +814,7 @@ Thay file README trống hiện tại bằng README hoàn chỉnh bằng tiếng
 
 Bao gồm:
 
-* giới thiệu StudyFlow
+* giới thiệu FocusLab
 * chức năng chính
 * công nghệ sử dụng
 * hướng dẫn cài đặt

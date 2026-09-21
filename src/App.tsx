@@ -7,6 +7,9 @@ import { Toasts } from './components/ui'
 import { CommandPalette } from './components/CommandPalette'
 import { TaskEditor } from './components/TaskEditor'
 import Dashboard from './pages/Dashboard'
+import Auth from './pages/Auth'
+import { AuthProvider, useAuth } from './hooks/useAuth'
+import { configurationError } from './lib/supabase'
 
 const Tasks = lazy(() => import('./pages/Tasks'))
 const Focus = lazy(() => import('./pages/Focus'))
@@ -89,13 +92,37 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean
     )
   }
 }
+function AuthenticatedApp() {
+  const { session, loading, error } = useAuth()
+  if (configurationError)
+    return (
+      <main className="auth-screen">
+        <section className="panel auth-card">
+          <h1>FocusLab</h1>
+          <p role="alert">{configurationError}</p>
+        </section>
+      </main>
+    )
+  if (loading)
+    return (
+      <main className="auth-screen">
+        <p role="status">Đang khôi phục phiên đăng nhập…</p>
+      </main>
+    )
+  if (!session) return <Auth initialError={error} />
+  return (
+    <AppProvider key={session.user.id}>
+      <Workspace />
+    </AppProvider>
+  )
+}
 export default function App() {
   return (
     <ErrorBoundary>
       <MotionConfig reducedMotion="user">
-        <AppProvider>
-          <Workspace />
-        </AppProvider>
+        <AuthProvider>
+          <AuthenticatedApp />
+        </AuthProvider>
       </MotionConfig>
     </ErrorBoundary>
   )

@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   Leaf,
   ListTodo,
+  LogOut,
   Menu,
   Search,
   Settings,
@@ -45,7 +46,7 @@ function MiniTimer() {
   ) : null
 }
 export function Layout({ children, onCommand }: { children: ReactNode; onCommand: () => void }) {
-  const { data, setData, page, navigate, storageWarning } = useApp()
+  const { data, setData, page, navigate, storageWarning, syncStatus, retrySync, logout } = useApp()
   const { goalPercent } = useStats()
   const [mobileMenu, setMobileMenu] = useState(false)
   const collapsed = data.settings.collapsed
@@ -94,7 +95,7 @@ export function Layout({ children, onCommand }: { children: ReactNode; onCommand
         <button
           className="brand"
           onClick={() => navigate('dashboard')}
-          aria-label="StudyFlow — Tổng quan"
+          aria-label="FocusLab — Tổng quan"
         >
           <span className="brand-mark">
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -108,7 +109,7 @@ export function Layout({ children, onCommand }: { children: ReactNode; onCommand
             </svg>
           </span>
           <span>
-            StudyFlow<span className="brand-dot">.</span>
+            FocusLab<span className="brand-dot">.</span>
           </span>
         </button>
         <div className="workspace-badge">
@@ -189,6 +190,14 @@ export function Layout({ children, onCommand }: { children: ReactNode; onCommand
               <Search size={18} />
             </IconButton>
             <ThemeMenu />
+            <IconButton
+              label="Đăng xuất"
+              onClick={() => {
+                void logout()
+              }}
+            >
+              <LogOut size={18} />
+            </IconButton>
             <span className="header-avatar" aria-label="Không gian cá nhân">
               B
             </span>
@@ -198,8 +207,18 @@ export function Layout({ children, onCommand }: { children: ReactNode; onCommand
           {storageWarning && (
             <div className="storage-warning" role="alert">
               {storageWarning}
+              <button className="button secondary" onClick={retrySync}>
+                Thử lưu lại
+              </button>
             </div>
           )}
+          <p className="cloud-status" role="status" aria-live="polite">
+            {syncStatus === 'saving'
+              ? 'Đang lưu lên đám mây…'
+              : syncStatus === 'error'
+                ? 'Chưa đồng bộ'
+                : 'Đã đồng bộ'}
+          </p>
           <AnimatePresence mode="wait">
             <motion.div
               key={page}
